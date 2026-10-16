@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'booking_page.dart';
 import 'laundry_service.dart';
 
 void main() {
@@ -140,11 +141,10 @@ class ServiceCard extends StatelessWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
           onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  'Booking for ${service.name} is coming in the next phase.',
-                ),
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => BookingPage(service: service),
               ),
             );
           },
