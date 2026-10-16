@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'booking_page.dart';
 import 'laundry_service.dart';
+import 'my_bookings_page.dart';
 
 void main() {
   runApp(const WashMeApp());
@@ -82,23 +83,46 @@ class HomePage extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.all(24),
           children: [
-            const Text(
-              'WASHME',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 2,
-                color: Color(0xFF64748B),
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Laundry made easy',
-              style: TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF0F172A),
-              ),
+            Row(
+              children: [
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'WASHME',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 2,
+                          color: Color(0xFF64748B),
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        'Laundry made easy',
+                        style: TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF0F172A),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton.filledTonal(
+                  tooltip: 'My Bookings',
+                  icon: const Icon(Icons.receipt_long),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const MyBookingsPage(),
+                      ),
+                    );
+                  },
+                ),
+              ],
             ),
             const SizedBox(height: 24),
             _buildBanner(),

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'booking.dart';
+import 'booking_storage.dart';
+import 'confirmation_page.dart';
 import 'laundry_service.dart';
 
 class BookingPage extends StatefulWidget {
@@ -25,7 +28,8 @@ class _BookingPageState extends State<BookingPage> {
 
   DateTime? _pickupDate;
   TimeOfDay? _pickupTime;
-  bool _showDateTimeError = false;
+  String? _dateTimeError;
+  bool _isSaving = false;
 
   @override
   void dispose() {
@@ -54,6 +58,7 @@ class _BookingPageState extends State<BookingPage> {
     if (picked != null) {
       setState(() {
         _pickupDate = picked;
+        _dateTimeError = null;
       });
     }
   }
@@ -67,52 +72,91 @@ class _BookingPageState extends State<BookingPage> {
     if (picked != null) {
       setState(() {
         _pickupTime = picked;
+        _dateTimeError = null;
       });
     }
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     final formIsValid = _formKey.currentState!.validate();
-    final hasDateAndTime = _pickupDate != null && _pickupTime != null;
+
+    final date = _pickupDate;
+    final time = _pickupTime;
+
+    String? dateTimeError;
+    DateTime? pickupDateTime;
+
+    if (date == null || time == null) {
+      dateTimeError = 'Please choose a pickup date and time';
+    } else {
+      pickupDateTime = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        time.hour,
+        time.minute,
+      );
+
+      if (pickupDateTime.isBefore(DateTime.now())) {
+        dateTimeError = 'Pickup time must be in the future';
+      }
+    }
 
     setState(() {
-      _showDateTimeError = !hasDateAndTime;
+      _dateTimeError = dateTimeError;
     });
 
-    if (!formIsValid || !hasDateAndTime) {
+    if (!formIsValid || dateTimeError != null || pickupDateTime == null) {
       return;
     }
 
-    final notes = _notesController.text.trim();
+    final booking = Booking(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      serviceName: widget.service.name,
+      customerName: _nameController.text.trim(),
+      phone: _phoneController.text.trim(),
+      address: _addressController.text.trim(),
+      notes: _notesController.text.trim(),
+      pickupTime: pickupDateTime,
+    );
 
-    showDialog(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Booking details ready'),
-          content: Text(
-            'Service: ${widget.service.name}\n'
-            'Name: ${_nameController.text.trim()}\n'
-            'Phone: ${_phoneController.text.trim()}\n'
-            'Pickup: ${_formatDate(_pickupDate!)} at ${_pickupTime!.format(context)}\n'
-            'Address: ${_addressController.text.trim()}\n'
-            'Notes: ${notes.isEmpty ? 'None' : notes}\n\n'
-            'Saving the booking comes in the next phase.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('OK'),
-            ),
-          ],
-        );
-      },
+    setState(() {
+      _isSaving = true;
+    });
+
+    try {
+      await BookingStorage().addBooking(booking);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isSaving = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not save your booking. Please try again.'),
+        ),
+      );
+      return;
+    }
+
+    if (!mounted) return;
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ConfirmationPage(booking: booking),
+      ),
     );
   }
 
-  InputDecoration _inputDecoration(String label, IconData icon) {
+  InputDecoration _inputDecoration(
+    String label,
+    IconData icon, {
+    String? hint,
+  }) {
     return InputDecoration(
       labelText: label,
+      hintText: hint,
       prefixIcon: Icon(icon),
       filled: true,
       fillColor: Colors.white,
@@ -218,8 +262,9 @@ class _BookingPageState extends State<BookingPage> {
                   maxLines: 2,
                   textInputAction: TextInputAction.next,
                   decoration: _inputDecoration(
-                    'Pickup address',
+                    'Pickup address or landmark',
                     Icons.location_on,
+                    hint: 'Street, landmark or Ghana Post GPS code',
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
@@ -256,13 +301,12 @@ class _BookingPageState extends State<BookingPage> {
                     ),
                   ],
                 ),
-                if (_showDateTimeError &&
-                    (_pickupDate == null || _pickupTime == null))
-                  const Padding(
-                    padding: EdgeInsets.only(top: 8, left: 4),
+                if (_dateTimeError != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8, left: 4),
                     child: Text(
-                      'Please choose a pickup date and time',
-                      style: TextStyle(
+                      _dateTimeError!,
+                      style: const TextStyle(
                         color: Color(0xFFB91C1C),
                         fontSize: 13,
                       ),
@@ -282,10 +326,10 @@ class _BookingPageState extends State<BookingPage> {
                   width: double.infinity,
                   height: 52,
                   child: FilledButton(
-                    onPressed: _submit,
-                    child: const Text(
-                      'Continue',
-                      style: TextStyle(fontSize: 16),
+                    onPressed: _isSaving ? null : _submit,
+                    child: Text(
+                      _isSaving ? 'Saving...' : 'Continue',
+                      style: const TextStyle(fontSize: 16),
                     ),
                   ),
                 ),
