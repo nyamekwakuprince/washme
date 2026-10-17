@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "446901938698",
+    "project_id": "washme-6ba82",
+    "storage_bucket": "washme-6ba82.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:446901938698:android:1f338acca90547810d0df3",
+        "android_client_info": {
+          "package_name": "com.example.washme"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDkrvrCes0AUWaPk98usxg4zamWqvCz0Y4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
