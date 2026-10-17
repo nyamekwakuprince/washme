@@ -4,6 +4,7 @@ import 'booking.dart';
 import 'booking_storage.dart';
 import 'confirmation_page.dart';
 import 'laundry_service.dart';
+import 'user_preferences.dart';
 
 class BookingPage extends StatefulWidget {
   final LaundryService service;
@@ -25,11 +26,18 @@ class _BookingPageState extends State<BookingPage> {
   final _phoneController = TextEditingController();
   final _addressController = TextEditingController();
   final _notesController = TextEditingController();
+  final UserPreferences _preferences = UserPreferences();
 
   DateTime? _pickupDate;
   TimeOfDay? _pickupTime;
   String? _dateTimeError;
   bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedContact();
+  }
 
   @override
   void dispose() {
@@ -38,6 +46,24 @@ class _BookingPageState extends State<BookingPage> {
     _addressController.dispose();
     _notesController.dispose();
     super.dispose();
+  }
+
+  // Fills in the name and phone the customer used last time.
+  Future<void> _loadSavedContact() async {
+    try {
+      final contact = await _preferences.loadContact();
+
+      if (!mounted) return;
+
+      if (_nameController.text.isEmpty) {
+        _nameController.text = contact.name;
+      }
+      if (_phoneController.text.isEmpty) {
+        _phoneController.text = contact.phone;
+      }
+    } catch (_) {
+      // If nothing can be loaded, the customer simply types the details.
+    }
   }
 
   String _formatDate(DateTime date) {
@@ -126,7 +152,7 @@ class _BookingPageState extends State<BookingPage> {
 
     try {
       await BookingStorage().addBooking(booking);
-        } catch (error) {
+    } catch (error) {
       debugPrint('Save failed: $error');
       if (!mounted) return;
       setState(() {
@@ -139,6 +165,15 @@ class _BookingPageState extends State<BookingPage> {
       );
       return;
     }
+
+    // Remember the name and phone for next time. If this fails, the
+    // booking is still saved, so the error is ignored.
+    try {
+      await _preferences.saveContact(
+        name: booking.customerName,
+        phone: booking.phone,
+      );
+    } catch (_) {}
 
     if (!mounted) return;
 
