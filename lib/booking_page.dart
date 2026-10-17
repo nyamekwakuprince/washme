@@ -126,7 +126,8 @@ class _BookingPageState extends State<BookingPage> {
 
     try {
       await BookingStorage().addBooking(booking);
-    } catch (_) {
+        } catch (error) {
+      debugPrint('Save failed: $error');
       if (!mounted) return;
       setState(() {
         _isSaving = false;

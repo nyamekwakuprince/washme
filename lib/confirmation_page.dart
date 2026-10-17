@@ -42,7 +42,7 @@ class ConfirmationPage extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               const Text(
-                'Your booking is saved on this phone. Online booking comes with Firebase in a later phase.',
+                'Your booking has been saved online.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 14,
